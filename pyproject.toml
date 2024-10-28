@@ -11,6 +11,7 @@ python = ">=3.10,<3.14"
 promptgit = "^0.2.0"
 vertexai = "^1.70.0"
 pydantic = "^2.9.2"
+tenacity = "^9.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
