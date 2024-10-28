@@ -6,8 +6,8 @@ from pydantic import BaseModel, Field
 from vertexai.generative_models import GenerationConfig, Part
 from vertexai.preview.generative_models import GenerativeModel
 from vertexai.preview.caching import CachedContent
-from google.api_core.exceptions import InvalidArgument
-
+from google.api_core.exceptions import InvalidArgument, ResourceExhausted
+from tenacity import retry, retry_if_exception, wait_exponential_jitter
 from promptgit import PromptRepo
 
 from .utils import flatten_openapi
@@ -30,6 +30,10 @@ class ProcessFeedback(BaseModel):
     recommendations : str = Field(description='Recomendation for writer how to improve playbook')
 
 prompts = PromptRepo('', dir='prompts')
+
+@retry(retry=retry_if_exception(ResourceExhausted), wait=wait_exponential_jitter(max=600))
+def generate(model, content):
+    return model.generate_content(content)
 
 def generate_process(
         video_uri: str, mime_type: str = 'video/mp4', 
@@ -96,7 +100,7 @@ def generate_process(
 
     for _ in range(n):
 
-        response = model_step1.generate_content(content_step1)
+        response = generate(model_step1, content_step1)
         process = Process.model_validate_json(response.candidates[0].content.parts[0].text)
 
         content_step2 = [
@@ -115,7 +119,7 @@ def generate_process(
             Part.from_text('</PROCESS>')    
         ]
 
-        response = model_step2.generate_content(content_step2)
+        response = generate(model_step2, content_step2)
         feedback = ProcessFeedback.model_validate_json(response.candidates[0].content.parts[0].text)
 
         process_list.append((process, feedback))
