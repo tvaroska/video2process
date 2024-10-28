@@ -1,0 +1,6 @@
+Below is the event log from the customer support analyst in csv format with the columns: timestamp, browser, count, idle_time_s, time_s, title, and url. 
+The event log does not fully capture the actions performed by agent and customer so you must prioritize the video log.
+
+<EVENTS>
+{events}
+</EVENTS>
